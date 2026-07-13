@@ -1,2 +1,26 @@
 .superpowers
 docs
+
+# Build output
+build/
+
+# macOS
+.DS_Store
+*.app
+
+# Qt Creator
+*.pro.user
+*.pro.user.*
+moc_*.cpp
+qrc_*.cpp
+ui_*.cpp
+*.qmldir
+
+# IDE
+.qt/
+.vscode/
+.idea/
+
+# Qt Shader artifacts (source tracked, compiled is build output)
+shaders/*.qsb
+*.qsb

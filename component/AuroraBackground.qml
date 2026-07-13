@@ -1,5 +1,6 @@
 import QtQuick
 import Qt5Compat.GraphicalEffects
+import QtQuick.Effects
 
 Rectangle {
     id: root
@@ -76,15 +77,15 @@ Rectangle {
     }
 
     // Soft blur on the glow layer
-    GaussianBlur {
+    MultiEffect {
         id: glowBlur
         anchors.fill: glowsLayer
         source: glowsLayer
-        radius: 64
-        samples: 16
-        transparentBorder: true
-        cached: true
-        visible: glowsLayer.visible
+        blurEnabled: true
+        blurMax: 64
+        blur: 1.0
+        /* transparentBorder: not needed on MultiEffect */
+        visible: Qt.application.animationEnabled !== undefined ? Qt.application.animationEnabled : true
     }
 
     // Slow drift animation

@@ -1,5 +1,6 @@
 import QtQuick
 import Qt5Compat.GraphicalEffects
+import QtQuick.Effects
 
 Rectangle {
     id: root
@@ -12,8 +13,16 @@ Rectangle {
     property string buttonText: "Explore →"
     property int cornerRadius: 20
     property real glowIntensity: 0.12  // default glow opacity
+    property int entranceDelay: 0
+    property bool entered: false
 
     implicitWidth: 320
+    opacity: entered ? 1.0 : 0
+    scale: entered ? 1.0 : 0.95
+    Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
+    Behavior on scale { SpringAnimation { spring: 3; damping: 0.3; mass: 1.0 } }
+    Component.onCompleted: entranceTimer.start()
+    Timer { id: entranceTimer; interval: root.entranceDelay; onTriggered: root.entered = true }
 
     signal clicked()
 
@@ -77,13 +86,15 @@ Rectangle {
     }
 
     // Apply blur to the glass surface
-    FastBlur {
+    MultiEffect {
         id: glassBlur
         anchors.fill: glassSurface
         source: glassSurface
-        radius: 40
-        transparentBorder: true
-        cached: true
+        blurEnabled: true
+        blurMax: 64
+        blur: 0.625
+        /* transparentBorder: not needed on MultiEffect */
+        /* cached: not supported on MultiEffect */
         visible: Qt.application.animationEnabled !== undefined ? Qt.application.animationEnabled : true
     }
 
@@ -93,7 +104,7 @@ Rectangle {
         anchors.fill: parent
         radius: root.cornerRadius
         color: Qt.rgba(22/255, 22/255, 42/255, 0.55)
-        visible: !glassBlur.visible
+        visible: !(Qt.application.animationEnabled !== undefined ? Qt.application.animationEnabled : true)
     }
 
     // Edge border (thin accent-colored)
@@ -107,16 +118,18 @@ Rectangle {
     }
 
     // Drop shadow behind the card
-    DropShadow {
+    MultiEffect {
+        id: cardShadow
         anchors.fill: parent
         source: parent
-        horizontalOffset: 0
-        verticalOffset: 8
-        radius: 32
-        samples: 24
-        color: Qt.rgba(0, 0, 0, 0.4)
-        transparentBorder: true
-        cached: true
+        shadowEnabled: true
+        shadowColor: Qt.rgba(0, 0, 0, 0.4)
+        shadowBlur: 0.5
+        shadowHorizontalOffset: 0
+        shadowVerticalOffset: 8
+        /* transparentBorder: not needed on MultiEffect */
+        /* cached: not supported on MultiEffect */
+        visible: glassBlur.visible
     }
 
     // --- Shimmer sweep overlay ---
@@ -227,45 +240,16 @@ Rectangle {
         }
 
         // Action button
-        Rectangle {
+        GlassButton {
             id: actionButton
             anchors.left: titleText.left
             anchors.right: parent.right
             anchors.rightMargin: 24
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 20
-            height: 38
-            radius: 12
-
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-                GradientStop { position: 0.0; color: Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.25) }
-                GradientStop { position: 1.0; color: Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.10) }
-            }
-            border.color: Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.20)
-            border.width: 1
-
-            Text {
-                anchors.centerIn: parent
-                text: root.buttonText
-                font.pixelSize: 13
-                font.weight: Font.DemiBold
-                color: Qt.rgba(
-                    Math.min(1.0, accentColor.r * 1.3),
-                    Math.min(1.0, accentColor.g * 1.3),
-                    Math.min(1.0, accentColor.b * 1.3),
-                    1.0
-                )
-            }
-
-            // Button MouseArea (handles click + hover)
-            MouseArea {
-                id: buttonMouseArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.clicked()
-            }
+            text: root.buttonText
+            accentColor: root.accentColor
+            onClicked: root.clicked()
         }
     }
 
@@ -278,25 +262,27 @@ Rectangle {
 
         // Propagate click to action button as well
         onClicked: root.clicked()
+        onPositionChanged: (mouse) => {
+            var nx = (mouse.x / root.width - 0.5) * 2;
+            var ny = (mouse.y / root.height - 0.5) * 2;
+            tiltY.angle = nx * 8;
+            tiltX.angle = -ny * 8;
+        }
+        onExited: { tiltX.angle = 0; tiltY.angle = 0; }
     }
 
-    // Hover lift translation
-    transform: Translate {
-        id: liftTransform
-        y: 0
-    }
+    transform: [
+        Translate { id: liftTransform; y: 0 },
+        Rotation { id: tiltX; angle: 0; origin.x: root.width / 2; origin.y: root.height / 2; Behavior on angle { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } } },
+        Rotation { id: tiltY; angle: 0; origin.x: root.width / 2; origin.y: root.height / 2; Behavior on angle { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } } }
+    ]
 
     states: [
         State {
             name: "hovered"
-            when: cardMouseArea.containsMouse && !buttonMouseArea.containsMouse
+            when: cardMouseArea.containsMouse
             PropertyChanges { target: liftTransform; y: -3 }
             PropertyChanges { target: root; glowIntensity: 0.20 }
-        },
-        State {
-            name: "buttonHovered"
-            when: buttonMouseArea.containsMouse
-            PropertyChanges { target: actionButton; border.color: Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.35) }
         },
         State {
             name: "pressed"
