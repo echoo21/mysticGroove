@@ -24,3 +24,5 @@ ui_*.cpp
 # Qt Shader artifacts (source tracked, compiled is build output)
 shaders/*.qsb
 *.qsb
+
+build
