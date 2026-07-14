@@ -76,6 +76,77 @@ Item {
             spacing: 0
             anchors.horizontalCenter: parent.horizontalCenter
 
+            // === HEADER — collapse button + drag-to-dismiss ===
+            Item {
+                width: parent.width
+                height: 40
+
+                // Chevron down button (return to tab view)
+                PlayerIcon {
+                    id: collapseBtn
+                    iconName: "chevronDown"
+                    iconSize: 22
+                    anchors.left: parent.left
+                    anchors.leftMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: Qt.rgba(1, 1, 1, 0.50)
+                    opacity: 0.8
+
+                    // Expanded tap target (≥44px)
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: Math.max(44, parent.width + 16)
+                        height: Math.max(44, parent.height + 16)
+                        radius: 22
+                        color: "transparent"
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.navigateBack()
+                        }
+                    }
+                }
+
+                // Optional "Now Playing" label (centered)
+                Text {
+                    anchors.centerIn: parent
+                    text: "Now Playing"
+                    font.pixelSize: 13
+                    font.weight: Font.DemiBold
+                    color: Qt.rgba(1, 1, 1, 0.35)
+                    opacity: 0.6
+                }
+
+                // Drag handle indicator (subtle bar at very top)
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.top
+                    anchors.topMargin: 6
+                    width: 28
+                    height: 3
+                    radius: 1.5
+                    color: Qt.rgba(1, 1, 1, 0.15)
+                }
+
+                // Swipe-down gesture: pull down on header to dismiss NowPlaying
+                // (gesture area = 44px from top, doesn't overlap with Flickable scroll)
+                property real dragStartY: 0
+
+                MouseArea {
+                    id: dismissArea
+                    anchors.fill: parent
+                    propagateComposedEvents: true
+
+                    onPressed: (mouse) => root.dragStartY = mouse.y
+                    onReleased: (mouse) => {
+                        if (mouse.y - root.dragStartY > 60) {
+                            root.navigateBack()
+                        }
+                    }
+                }
+            }
+
             // === AMBIENT GLOW + ALBUM ART ===
             Item {
                 width: parent.width
