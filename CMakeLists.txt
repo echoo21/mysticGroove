@@ -42,6 +42,10 @@ qt_add_qml_module(mysticGrooveApp
         component/MiniPlayer.qml
         component/NowPlayingView.qml
         component/PlaylistView.qml
+        component/TabBar.qml
+        component/HomeView.qml
+        component/SearchView.qml
+        component/LibraryView.qml
     RESOURCES
         component/aurora.frag.qsb
 )

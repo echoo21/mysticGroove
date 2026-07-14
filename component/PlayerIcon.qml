@@ -13,7 +13,8 @@ import QtQuick.Shapes
  *   play, pause, skipPrevious, skipNext,
  *   shuffle, repeat,
  *   volumeHigh, volumeMedium, volumeLow, volumeMuted,
- *   chevronLeft, musicNote, queue
+ *   chevronLeft, chevronDown, chevronUp,
+ *   musicNote, queue, home, search, library
  */
 Item {
     id: root
@@ -106,10 +107,20 @@ Item {
                 return "M17,9 L22,14 M22,9 L17,14";
             case "chevronLeft":
                 return "M15,6 L8,12 L15,18";
+            case "chevronDown":
+                return "M6,9 L12,15 L18,9";
+            case "chevronUp":
+                return "M6,15 L12,9 L18,15";
             case "musicNote":
                 return "M15,4 V15 C15,13.34 13.66,12 12,12 C10.34,12 9,13.34 9,15 C9,16.66 10.34,18 12,18 C12.62,18 13.2,17.8 13.67,17.47 M15,4 L8,5.5 V15 M8,13.5 V15";
             case "queue":
                 return "M3,7 H21 M3,13 H18 M3,19 H15";
+            case "home":
+                return "M12,4 L4,10 V20 H10 V14 H14 V20 H20 V10 Z";
+            case "search":
+                return "M10,3 C14.42,3 18,6.58 18,11 C18,12.85 17.37,14.55 16.31,15.9 L20,19.59 L18.59,21 L14.9,17.31 C13.55,18.37 11.85,19 10,19 C5.58,19 2,15.42 2,11 C2,6.58 5.58,3 10,3 Z M10,5 C7.24,5 5,7.24 5,11 C5,13.76 7.24,16 10,16 C12.76,16 15,13.76 15,11 C15,8.24 12.76,5 10,5 Z";
+            case "library":
+                return "M4,4 H10 V20 H4 Z M14,4 H20 V20 H14 Z M4,7 L4,17 L10,17 L10,7 Z M14,4 H20 V20 H14 Z";
             default:
                 return "";
         }

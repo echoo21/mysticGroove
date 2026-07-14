@@ -17,15 +17,35 @@ Window {
     property bool isPlaying: false
     property bool shuffleActive: false
     property bool repeatActive: false
-    property real position: 0.0         // 0.0–1.0
-    property real currentTime: 0.0      // seconds
+    property real position: 0.0
+    property real currentTime: 0.0
     property color currentAccent: "#A855F7"
-    property bool showingPlaylist: false
     property bool trackEnded: false
 
     // ============================================================
+    // NAVIGATION STATE
+    // ============================================================
+    property string currentPage: "home"      // home | search | library | nowPlaying | queue
+    property int tabIndex: 0
+
+    function navigateTo(page) {
+        if (page === "home")  { tabIndex = 0; currentPage = "home" }
+        if (page === "search") { tabIndex = 1; currentPage = "search" }
+        if (page === "library") { tabIndex = 2; currentPage = "library" }
+        if (page === "nowPlaying") { currentPage = "nowPlaying" }
+        if (page === "queue") { currentPage = "queue" }
+    }
+
+    function navigateBack() {
+        if (currentPage === "queue") {
+            currentPage = "nowPlaying"
+        } else if (currentPage === "nowPlaying") {
+            navigateTo(tabIndex === 0 ? "home" : tabIndex === 1 ? "search" : "library")
+        }
+    }
+
+    // ============================================================
     // MOCK TRACK DATA
-    // TODO: Replace with actual backend model and metadata.
     // ============================================================
     property var trackData: [
         { title: "Neon Dreams",         artist: "Mystic Groove",         duration: 272, art: "", accent: "#A855F7" },
@@ -55,7 +75,7 @@ Window {
     }
 
     // ============================================================
-    // PLAYBACK SIMULATION TIMER  (placeholder — backend nanti)
+    // PLAYBACK SIMULATION TIMER
     // TODO: Remove this timer and connect to actual audio playback.
     // ============================================================
     Timer {
@@ -66,14 +86,10 @@ Window {
         onTriggered: {
             var dur = currentDuration()
             if (dur <= 0) return
-
             currentTime += 0.25
             position = Math.min(currentTime / dur, 1.0)
-
-            // Track ended
             if (position >= 1.0) {
                 if (repeatActive) {
-                    // Repeat one track
                     currentTime = 0
                     position = 0
                 } else {
@@ -98,31 +114,23 @@ Window {
 
     function nextTrack() {
         if (shuffleActive) {
-            var next
-            do {
-                next = Math.floor(Math.random() * trackData.length)
-            } while (next === currentTrackIndex && trackData.length > 1)
-            playTrack(next)
+            var n
+            do { n = Math.floor(Math.random() * trackData.length) }
+            while (n === currentTrackIndex && trackData.length > 1)
+            playTrack(n)
         } else {
-            var idx = (currentTrackIndex + 1) % trackData.length
-            playTrack(idx)
+            playTrack((currentTrackIndex + 1) % trackData.length)
         }
     }
 
     function previousTrack() {
         if (currentTime > 3) {
-            // Restart current track
-            currentTime = 0
-            position = 0
-            return
+            currentTime = 0; position = 0; return
         }
-        var idx = (currentTrackIndex - 1 + trackData.length) % trackData.length
-        playTrack(idx)
+        playTrack((currentTrackIndex - 1 + trackData.length) % trackData.length)
     }
 
-    function togglePlayPause() {
-        isPlaying = !isPlaying
-    }
+    function togglePlayPause() { isPlaying = !isPlaying }
 
     // ============================================================
     // AURORA BACKGROUND
@@ -130,7 +138,6 @@ Window {
     MyComponents.AuroraShader {
         anchors.fill: parent
         animated: Qt.application.animationEnabled !== undefined ? Qt.application.animationEnabled : true
-        // TODO: Optionally vary shader colors based on currentAccent.
     }
 
     MyComponents.AuroraParticles {
@@ -140,138 +147,190 @@ Window {
     }
 
     // ============================================================
-    // MAIN CONTENT
+    // MAIN CONTENT AREA (Tab pages — home / search / library)
     // ============================================================
     Item {
         id: contentArea
-        anchors.fill: parent
-        anchors.bottomMargin: showingPlaylist ? miniPlayer.height : 0
+        anchors.top: parent.top
+        anchors.bottom: chromeArea.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        z: 2
         clip: true
 
-        // -- NOW PLAYING VIEW --
-        MyComponents.NowPlayingView {
-            id: nowPlayingView
-            x: 0
-            y: 0
-            width: contentArea.width
-            height: contentArea.height
-
+        // Home
+        MyComponents.HomeView {
+            id: homeView
+            anchors.fill: parent
+            opacity: tabIndex === 0 ? 1.0 : 0.0
+            visible: opacity > 0
             accentColor: window.currentAccent
-            trackTitle: window.currentTitle()
-            trackArtist: window.currentArtist()
-            albumArt: window.currentArt()
-            isPlaying: window.isPlaying
-            position: window.position
-            currentTime: window.currentTime
-            duration: window.currentDuration()
-            shuffleActive: window.shuffleActive
-            repeatActive: window.repeatActive
-
-            onPlayPauseClicked:  window.togglePlayPause()
-            onNextClicked:       window.nextTrack()
-            onPreviousClicked:   window.previousTrack()
-            onShuffleClicked:    window.shuffleActive = !window.shuffleActive
-            onRepeatClicked:     window.repeatActive = !window.repeatActive
-            onSeeked: (value) => {
-                // TODO: Connect seek to actual audio backend
-                window.position = value
-                window.currentTime = value * currentDuration()
-            }
-            onNavigateToQueue:   window.showingPlaylist = true
-        }
-
-        // -- PLAYLIST VIEW --
-        MyComponents.PlaylistView {
-            id: playlistView
-            x: contentArea.width   // starts off-screen; state system manages transitions
-            y: 0
-            width: contentArea.width
-            height: contentArea.height
-
-            accentColor: window.currentAccent
-            isPlaying: window.isPlaying
+            trackData: window.trackData
             currentTrackIndex: window.currentTrackIndex
-            playlistData: window.trackData  // share same data
-
-            onBackToPlayer: window.showingPlaylist = false
-            onTrackSelected: (idx) => {
-                window.playTrack(idx)
-                window.showingPlaylist = false
-            }
+            isPlaying: window.isPlaying
+            onTrackClicked: (idx) => { playTrack(idx); navigateTo("nowPlaying") }
         }
 
-        // Navigation states & transitions (Item supports these; Window does not)
-        states: [
-            State {
-                name: "playlistView"
-                when: window.showingPlaylist
-                PropertyChanges { target: nowPlayingView; x: -contentArea.width * 0.15; opacity: 0.0; scale: 0.92 }
-                PropertyChanges { target: playlistView; x: 0 }
-            },
-            State {
-                name: "playerView"
-                when: !window.showingPlaylist
-                PropertyChanges { target: nowPlayingView; x: 0; opacity: 1.0; scale: 1.0 }
-                PropertyChanges { target: playlistView; x: contentArea.width }
-            }
-        ]
+        // Search
+        MyComponents.SearchView {
+            id: searchView
+            anchors.fill: parent
+            opacity: tabIndex === 1 ? 1.0 : 0.0
+            visible: opacity > 0
+            accentColor: window.currentAccent
+            trackData: window.trackData
+            currentTrackIndex: window.currentTrackIndex
+            isPlaying: window.isPlaying
+            onTrackClicked: (idx) => { playTrack(idx); navigateTo("nowPlaying") }
+        }
 
-        transitions: [
-            Transition {
-                from: "playerView"; to: "playlistView"
-                NumberAnimation { target: nowPlayingView; property: "x"; duration: 400; easing.type: Easing.OutCubic }
-                NumberAnimation { target: nowPlayingView; property: "opacity"; duration: 350; easing.type: Easing.OutCubic }
-                NumberAnimation { target: nowPlayingView; property: "scale"; duration: 350; easing.type: Easing.OutCubic }
-                NumberAnimation { target: playlistView; property: "x"; duration: 400; easing.type: Easing.OutCubic }
-            },
-            Transition {
-                from: "playlistView"; to: "playerView"
-                NumberAnimation { target: nowPlayingView; property: "x"; duration: 400; easing.type: Easing.OutCubic }
-                NumberAnimation { target: nowPlayingView; property: "opacity"; duration: 350; easing.type: Easing.OutCubic }
-                NumberAnimation { target: nowPlayingView; property: "scale"; duration: 350; easing.type: Easing.OutCubic }
-                NumberAnimation { target: playlistView; property: "x"; duration: 400; easing.type: Easing.OutCubic }
-            }
-        ]
+        // Library
+        MyComponents.LibraryView {
+            id: libraryView
+            anchors.fill: parent
+            opacity: tabIndex === 2 ? 1.0 : 0.0
+            visible: opacity > 0
+            accentColor: window.currentAccent
+            trackData: window.trackData
+            currentTrackIndex: window.currentTrackIndex
+            isPlaying: window.isPlaying
+            onTrackClicked: (idx) => { playTrack(idx); navigateTo("nowPlaying") }
+            onPlaylistClicked: (name, items) => { navigateTo("library") }
+        }
+
+        Behavior on opacity { NumberAnimation { duration: 200 } }
     }
 
     // ============================================================
-    // MINI PLAYER
+    // CHROME AREA (TabBar + MiniPlayer)
     // ============================================================
-    MyComponents.MiniPlayer {
-        id: miniPlayer
+    Item {
+        id: chromeArea
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        visible: window.showingPlaylist
-        height: 64
+        z: 4
+        height: tabBar.height + (miniPlayer.visible ? miniPlayer.height : 0)
+
+        // Mini Player
+        MyComponents.MiniPlayer {
+            id: miniPlayer
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: tabBar.top
+            height: 64
+            visible: currentTrackIndex >= 0
+                && currentPage !== "nowPlaying"
+                && currentPage !== "queue"
+
+            accentColor: window.currentAccent
+            songTitle: window.currentTitle()
+            artist: window.currentArtist()
+            artSource: window.currentArt()
+            isPlaying: window.isPlaying
+            position: window.position
+            duration: window.currentDuration()
+
+            onExpandClicked: navigateTo("nowPlaying")
+            onPlayPauseClicked: window.togglePlayPause()
+            onNextClicked: window.nextTrack()
+        }
+
+        // Tab Bar
+        MyComponents.TabBar {
+            id: tabBar
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 52
+            accentColor: window.currentAccent
+            currentIndex: tabIndex
+            onTabClicked: (idx) => {
+                tabIndex = idx
+                var pages = ["home", "search", "library"]
+                currentPage = pages[idx]
+            }
+        }
+    }
+
+    // ============================================================
+    // NOW PLAYING VIEW (sheet — covers everything)
+    // ============================================================
+    MyComponents.NowPlayingView {
+        id: nowPlayingView
+        anchors.left: parent.left
+        anchors.right: parent.right
+        y: currentPage === "nowPlaying" ? 0 : parent.height
+        height: parent.height
+        z: 10
 
         accentColor: window.currentAccent
-        songTitle: window.currentTitle()
-        artist: window.currentArtist()
-        artSource: window.currentArt()
+        trackTitle: window.currentTitle()
+        trackArtist: window.currentArtist()
+        albumArt: window.currentArt()
         isPlaying: window.isPlaying
         position: window.position
+        currentTime: window.currentTime
         duration: window.currentDuration()
+        shuffleActive: window.shuffleActive
+        repeatActive: window.repeatActive
 
-        onExpandClicked: window.showingPlaylist = false
-        onPlayPauseClicked: window.togglePlayPause()
-        onNextClicked: window.nextTrack()
+        onPlayPauseClicked:  window.togglePlayPause()
+        onNextClicked:       window.nextTrack()
+        onPreviousClicked:   window.previousTrack()
+        onShuffleClicked:    window.shuffleActive = !window.shuffleActive
+        onRepeatClicked:     window.repeatActive = !window.repeatActive
+        onSeeked: (value) => {
+            window.position = value
+            window.currentTime = value * currentDuration()
+        }
+        onNavigateToQueue:   navigateTo("queue")
+        onNavigateBack:      navigateBack()
+        onVolumeAdjusted: (v) => { /* TODO: connect to audio backend volume */ }
+
+        Behavior on y {
+            NumberAnimation { duration: 450; easing.type: Easing.OutCubic }
+        }
+    }
+
+    // ============================================================
+    // PLAYLIST / QUEUE VIEW (covers nowPlaying)
+    // ============================================================
+    MyComponents.PlaylistView {
+        id: playlistView
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        x: currentPage === "queue" ? 0 : parent.width
+        z: 20
+
+        accentColor: window.currentAccent
+        isPlaying: window.isPlaying
+        currentTrackIndex: window.currentTrackIndex
+        playlistData: window.trackData
+
+        onBackToPlayer: navigateBack()
+        onTrackSelected: (idx) => {
+            playTrack(idx)
+            currentPage = "nowPlaying"
+        }
+
+        Behavior on x {
+            NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
+        }
     }
 
     // ============================================================
     // LIFECYCLE
     // ============================================================
     Component.onCompleted: {
-        // Initialize first track
         currentAccent = trackData[0].accent
         currentTime = 0
         position = 0
     }
 
-    // Pause when window loses focus
     onActiveChanged: {
-        if (!active && isPlaying) {
-            // Optionally pause, or keep playing — let user decide later
-        }
+        if (!active && isPlaying) { /* optionally pause */ }
     }
 }

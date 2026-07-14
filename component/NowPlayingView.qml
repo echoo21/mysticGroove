@@ -236,11 +236,20 @@ Item {
                                 : (root.volume > 0.5 ? "volumeHigh" : "volumeLow")
                         iconSize: 20
                         color: Qt.rgba(1, 1, 1, 0.55)
-                        MouseArea {
-                            anchors.fill: parent
-                            anchors.margins: -8
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.volumeExpanded = !root.volumeExpanded
+
+                        // Expanded tap target (≥44px)
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: Math.max(44, parent.width + 16)
+                            height: Math.max(44, parent.height + 16)
+                            radius: 22
+                            color: "transparent"
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.volumeExpanded = !root.volumeExpanded
+                            }
                         }
                     }
 

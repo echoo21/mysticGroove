@@ -130,7 +130,7 @@ Item {
         }
         PlayerIconButton {
             iconName: "skipNext"
-            size: 32
+            size: 38
             accentColor: root.accentColor
             iconScale: 0.38
             onClicked: root.nextClicked()
