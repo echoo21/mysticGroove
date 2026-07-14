@@ -261,10 +261,12 @@ Window {
     // ============================================================
     MyComponents.NowPlayingView {
         id: nowPlayingView
+        // anchors.left/right aman dipakai karena y yang dianimasi (tidak konflik horizontal)
         anchors.left: parent.left
         anchors.right: parent.right
         y: currentPage === "nowPlaying" ? 0 : parent.height
         height: parent.height
+        visible: currentPage === "nowPlaying"
         z: 10
 
         accentColor: window.currentAccent
@@ -301,11 +303,12 @@ Window {
     // ============================================================
     MyComponents.PlaylistView {
         id: playlistView
-        anchors.left: parent.left
-        anchors.right: parent.right
+        // NOTE: anchors.left/right TIDAK dipakai karena akan konflik dengan x yang dianimasi
         anchors.top: parent.top
         anchors.bottom: parent.bottom
+        width: parent.width
         x: currentPage === "queue" ? 0 : parent.width
+        visible: currentPage === "queue"
         z: 20
 
         accentColor: window.currentAccent
