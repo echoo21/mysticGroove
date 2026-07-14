@@ -195,7 +195,10 @@ Window {
             currentTrackIndex: window.currentTrackIndex
             isPlaying: window.isPlaying
             onTrackClicked: (idx) => { playTrack(idx); navigateTo("nowPlaying") }
-            onPlaylistClicked: (name, items) => { navigateTo("library") }
+            onPlaylistClicked: (name, items) => {
+                playlistView.playlistTitle = name
+                navigateTo("queue")
+            }
         }
 
         Behavior on opacity { NumberAnimation { duration: 200 } }

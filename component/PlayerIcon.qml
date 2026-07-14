@@ -82,9 +82,6 @@ Item {
             case "volumeMuted":
                 // Speaker body (shared by all volume icons)
                 return "M3,9 H7 L12,4 V20 L7,15 H3 Z";
-            case "queue":
-                // Play indicator triangle for queue
-                return "M17,16 L22,18 L17,20 Z";
             default:
                 return "";
         }

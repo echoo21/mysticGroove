@@ -37,11 +37,9 @@ Item {
 
         Column {
             id: homeColumn
-            width: {
-                var maxW = Math.min(parent.width, 800)
-                return Math.max(parent.width - sideMargins * 2, maxW - sideMargins * 2)
-            }
+            width: cappedWidth
             property real sideMargins: Math.max(16, (parent.width - Math.min(parent.width, 800)) * 0.3)
+            property real cappedWidth: Math.min(parent.width, 800) - sideMargins * 2
             x: sideMargins
             spacing: 24
 
@@ -71,81 +69,90 @@ Item {
                     color: "#E0E0F0"
                 }
 
-                Row {
-                    id: recentRow
-                    spacing: 12
+                // Horizontal scrollable ListView (Bug 1 fix)
+                ListView {
+                    id: recentList
                     width: parent.width
                     height: 140
+                    orientation: ListView.Horizontal
+                    spacing: 12
                     clip: true
+                    interactive: true
+                    boundsBehavior: Flickable.StopAtBounds
 
-                    Repeater {
-                        model: root.trackData
+                    model: root.trackData
 
-                        delegate: Rectangle {
-                            width: 120
-                            height: 136
+                    delegate: Rectangle {
+                        width: 120
+                        height: 136
+                        radius: 12
+                        color: Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.08)
+
+                        Rectangle {
+                            anchors.fill: parent
                             radius: 12
-                            color: Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.08)
+                            color: Qt.rgba(1, 1, 1, 0.04)
+                            opacity: recentHover.containsMouse ? 1.0 : 0.0
+                            Behavior on opacity { NumberAnimation { duration: 150 } }
+                        }
 
+                        Column {
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            spacing: 8
+
+                            // Art thumbnail
                             Rectangle {
-                                anchors.fill: parent
-                                radius: 12
-                                color: Qt.rgba(1, 1, 1, 0.04)
-                                opacity: recentHover.containsMouse ? 1.0 : 0.0
-                                Behavior on opacity { NumberAnimation { duration: 150 } }
-                            }
+                                width: parent.width
+                                height: parent.width
+                                radius: 8
+                                color: Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.20)
 
-                            Column {
-                                anchors.fill: parent
-                                anchors.margins: 8
-                                spacing: 8
-
-                                // Art thumbnail
-                                Rectangle {
-                                    width: parent.width
-                                    height: parent.width
-                                    radius: 8
-                                    color: Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.20)
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: modelData.title.charAt(0).toUpperCase()
-                                        font.pixelSize: 24
-                                        font.weight: Font.DemiBold
-                                        color: Qt.rgba(1, 1, 1, 0.30)
-                                    }
-                                }
-
-                                // Title
                                 Text {
-                                    width: parent.width
-                                    text: modelData.title
-                                    font.pixelSize: 12
+                                    anchors.centerIn: parent
+                                    text: modelData.title.charAt(0).toUpperCase()
+                                    font.pixelSize: 24
                                     font.weight: Font.DemiBold
-                                    color: "#F0F0FF"
-                                    elide: Text.ElideRight
-                                    lineHeight: 1.2
-                                    maximumLineCount: 1
-                                }
-
-                                // Artist
-                                Text {
-                                    width: parent.width
-                                    text: modelData.artist
-                                    font.pixelSize: 10
-                                    color: Qt.rgba(1, 1, 1, 0.45)
-                                    elide: Text.ElideRight
+                                    color: Qt.rgba(1, 1, 1, 0.30)
                                 }
                             }
 
-                            MouseArea {
-                                id: recentHover
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.trackClicked(index)
+                            // Title
+                            Text {
+                                width: parent.width
+                                text: modelData.title
+                                font.pixelSize: 12
+                                font.weight: Font.DemiBold
+                                color: "#F0F0FF"
+                                elide: Text.ElideRight
+                                lineHeight: 1.2
+                                maximumLineCount: 1
+                            }
+
+                            // Artist
+                            Text {
+                                width: parent.width
+                                text: modelData.artist
+                                font.pixelSize: 10
+                                color: Qt.rgba(1, 1, 1, 0.45)
+                                elide: Text.ElideRight
                             }
                         }
+
+                        MouseArea {
+                            id: recentHover
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.trackClicked(index)
+                        }
+                    }
+
+                    ScrollBar.horizontal: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                        height: 3
+                        background: Rectangle { color: "transparent" }
+                        contentItem: Rectangle { radius: 1.5; color: Qt.rgba(1, 1, 1, 0.12) }
                     }
                 }
             }

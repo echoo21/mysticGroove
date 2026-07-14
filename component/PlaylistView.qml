@@ -17,6 +17,7 @@ Item {
     property color accentColor: "#A855F7"
     property bool isPlaying: false
     property int currentTrackIndex: -1
+    property string playlistTitle: "Now Playing"
 
     signal backToPlayer()
     signal trackSelected(int index)
@@ -87,10 +88,13 @@ Item {
                 // Title
                 Text {
                     anchors.centerIn: parent
-                    text: "Now Playing"
+                    text: root.playlistTitle
                     font.pixelSize: 18
                     font.weight: Font.DemiBold
                     color: "#F0F0FF"
+                    elide: Text.ElideRight
+                    width: parent.width - 80
+                    horizontalAlignment: Text.AlignHCenter
                 }
             }
 

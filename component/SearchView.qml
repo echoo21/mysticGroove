@@ -49,21 +49,12 @@ Item {
             width: parent.width
             spacing: 20
 
-            // === Max-width wrapper ===
-            Item {
-                width: 1
-                height: 1
-                visible: false
-            }
-
             // === SEARCH FIELD ===
             Rectangle {
                 id: searchFieldBg
-                width: {
-                    var maxW = Math.min(parent.width, 800)
-                    return Math.max(parent.width - sideMargins * 2, maxW - sideMargins * 2)
-                }
-                property real sideMargins: Math.max(16, (parent.width - Math.min(parent.width, 800)) * 0.3)
+                readonly property real sideMargins: Math.max(16, (parent.width - Math.min(parent.width, 800)) * 0.3)
+                readonly property real cappedWidth: Math.min(parent.width, 800) - sideMargins * 2
+                width: cappedWidth
                 x: sideMargins
 
                 height: 44
@@ -141,12 +132,6 @@ Item {
             }
 
             // === RESULTS or GENRES ===
-            Item {
-                width: 1
-                height: 1
-                visible: false  // spacer elimination
-            }
-
             // Search results (filtered trackData)
             Column {
                 width: searchFieldBg.width
