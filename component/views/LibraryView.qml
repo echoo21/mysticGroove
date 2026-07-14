@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import "."
+import "../player"
 
 /**
  * Library screen — mock playlists and collections.

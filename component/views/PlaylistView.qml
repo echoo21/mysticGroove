@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
-import "."
+import "../items"
+import "../player"
 
 /**
  * Playlist/Queue screen — scrollable list of QueueItem delegates with header and back button.
@@ -47,6 +48,12 @@ Item {
 
     implicitWidth: parent ? parent.width : 360
     implicitHeight: parent ? parent.height : 600
+
+    // Opaque background — prevents content behind bleeding through
+    Rectangle {
+        anchors.fill: parent
+        color: Qt.rgba(6/255, 6/255, 16/255, 0.97)
+    }
 
     Flickable {
         id: playlistFlick

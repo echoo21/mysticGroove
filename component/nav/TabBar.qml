@@ -1,5 +1,5 @@
 import QtQuick
-import "."
+import "../player"
 
 /**
  * Bottom tab navigation bar (Spotify/Apple Music style).

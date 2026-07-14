@@ -28,24 +28,24 @@ qt_add_qml_module(mysticGrooveApp
     VERSION 1.0
     QML_FILES
         main.qml
-        component/AuroraBackground.qml
-        component/AuroraShader.qml
-        component/AuroraParticles.qml
-        component/GlassCard.qml
-        component/GlassButton.qml
-        component/PlayerIconButton.qml
-        component/PlayerIcon.qml
-        component/SeekBar.qml
-        component/AlbumArtDisplay.qml
-        component/PlayerControls.qml
-        component/QueueItem.qml
-        component/MiniPlayer.qml
-        component/NowPlayingView.qml
-        component/PlaylistView.qml
-        component/TabBar.qml
-        component/HomeView.qml
-        component/SearchView.qml
-        component/LibraryView.qml
+        component/background/AuroraBackground.qml
+        component/background/AuroraShader.qml
+        component/background/AuroraParticles.qml
+        component/glass/GlassCard.qml
+        component/glass/GlassButton.qml
+        component/player/PlayerIconButton.qml
+        component/player/PlayerIcon.qml
+        component/player/SeekBar.qml
+        component/player/AlbumArtDisplay.qml
+        component/player/PlayerControls.qml
+        component/player/MiniPlayer.qml
+        component/items/QueueItem.qml
+        component/nav/TabBar.qml
+        component/views/NowPlayingView.qml
+        component/views/PlaylistView.qml
+        component/views/HomeView.qml
+        component/views/SearchView.qml
+        component/views/LibraryView.qml
     RESOURCES
         component/aurora.frag.qsb
 )

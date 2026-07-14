@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
-import "."
+import "../player"
 
 /**
  * Full now-playing screen — album art, song info, seek bar, transport controls, queue button.
@@ -47,6 +47,12 @@ Item {
 
     implicitWidth: parent ? parent.width : 360
     implicitHeight: parent ? parent.height : 600
+
+    // Opaque background — prevents TabBar content bleeding through
+    Rectangle {
+        anchors.fill: parent
+        color: Qt.rgba(6/255, 6/255, 16/255, 0.97)
+    }
 
     // Scrollable content
     Flickable {

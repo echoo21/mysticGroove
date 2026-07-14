@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
-import "."
+import "../items"
+import "../player"
 
 /**
  * Search screen — styled search field, genre grid (idle), filtered results (typing).

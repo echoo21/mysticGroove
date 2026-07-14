@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import "."
-
+// HomeView uses no cross-component references
 /**
  * Home screen — greeting, recently played horizontal scroll, quick picks grid.
  * Responsive layout with max-width cap for large screens.

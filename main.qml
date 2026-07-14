@@ -1,7 +1,10 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
-import "component" as MyComponents
+import "component/background" as Background
+import "component/views" as Views
+import "component/player" as Player
+import "component/nav" as Nav
 
 Window {
     id: window
@@ -135,12 +138,12 @@ Window {
     // ============================================================
     // AURORA BACKGROUND
     // ============================================================
-    MyComponents.AuroraShader {
+    Background.AuroraShader {
         anchors.fill: parent
         animated: Qt.application.animationEnabled !== undefined ? Qt.application.animationEnabled : true
     }
 
-    MyComponents.AuroraParticles {
+    Background.AuroraParticles {
         anchors.fill: parent
         z: 1
         animated: Qt.application.animationEnabled !== undefined ? Qt.application.animationEnabled : true
@@ -155,11 +158,12 @@ Window {
         anchors.bottom: chromeArea.top
         anchors.left: parent.left
         anchors.right: parent.right
+        visible: currentPage === "home" || currentPage === "search" || currentPage === "library"
         z: 2
         clip: true
 
         // Home
-        MyComponents.HomeView {
+        Views.HomeView {
             id: homeView
             anchors.fill: parent
             opacity: tabIndex === 0 ? 1.0 : 0.0
@@ -172,7 +176,7 @@ Window {
         }
 
         // Search
-        MyComponents.SearchView {
+        Views.SearchView {
             id: searchView
             anchors.fill: parent
             opacity: tabIndex === 1 ? 1.0 : 0.0
@@ -185,7 +189,7 @@ Window {
         }
 
         // Library
-        MyComponents.LibraryView {
+        Views.LibraryView {
             id: libraryView
             anchors.fill: parent
             opacity: tabIndex === 2 ? 1.0 : 0.0
@@ -204,6 +208,10 @@ Window {
         Behavior on opacity { NumberAnimation { duration: 200 } }
     }
 
+    // Sembunyikan contentArea + chromeArea (TabBar + MiniPlayer) saat sheet aktif
+    // agar tidak numpuk di belakang NowPlayingView/PlaylistView.
+    // Binding dilakukan deklaratif di masing-masing Item.
+
     // ============================================================
     // CHROME AREA (TabBar + MiniPlayer)
     // ============================================================
@@ -212,11 +220,12 @@ Window {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
+        visible: currentPage === "home" || currentPage === "search" || currentPage === "library"
         z: 4
         height: tabBar.height + (miniPlayer.visible ? miniPlayer.height : 0)
 
         // Mini Player
-        MyComponents.MiniPlayer {
+        Player.MiniPlayer {
             id: miniPlayer
             anchors.left: parent.left
             anchors.right: parent.right
@@ -240,7 +249,7 @@ Window {
         }
 
         // Tab Bar
-        MyComponents.TabBar {
+        Nav.TabBar {
             id: tabBar
             anchors.left: parent.left
             anchors.right: parent.right
@@ -259,7 +268,7 @@ Window {
     // ============================================================
     // NOW PLAYING VIEW (sheet — covers everything)
     // ============================================================
-    MyComponents.NowPlayingView {
+    Views.NowPlayingView {
         id: nowPlayingView
         // anchors.left/right aman dipakai karena y yang dianimasi (tidak konflik horizontal)
         anchors.left: parent.left
@@ -301,7 +310,7 @@ Window {
     // ============================================================
     // PLAYLIST / QUEUE VIEW (covers nowPlaying)
     // ============================================================
-    MyComponents.PlaylistView {
+    Views.PlaylistView {
         id: playlistView
         // NOTE: anchors.left/right TIDAK dipakai karena akan konflik dengan x yang dianimasi
         anchors.top: parent.top
