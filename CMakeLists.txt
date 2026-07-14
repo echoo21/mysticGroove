@@ -4,6 +4,7 @@ project(mysticGroove LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2)
 
@@ -18,6 +19,7 @@ qt_add_executable(mysticGrooveApp
 
 set_target_properties(mysticGrooveApp PROPERTIES
     MACOSX_BUNDLE TRUE
+    OUTPUT_NAME "mysticGroove"
 )
 
 # Register QML module
@@ -31,6 +33,14 @@ qt_add_qml_module(mysticGrooveApp
         component/AuroraParticles.qml
         component/GlassCard.qml
         component/GlassButton.qml
+        component/PlayerIconButton.qml
+        component/SeekBar.qml
+        component/AlbumArtDisplay.qml
+        component/PlayerControls.qml
+        component/QueueItem.qml
+        component/MiniPlayer.qml
+        component/NowPlayingView.qml
+        component/PlaylistView.qml
         component/aurora.frag.qsb
     RESOURCES
 )

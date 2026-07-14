@@ -10,10 +10,127 @@ Window {
     visible: true
     title: "Mystic Groove"
 
-    // Aurora background (GPU shader)
+    // ============================================================
+    // PLAYER STATE
+    // ============================================================
+    property int currentTrackIndex: 0
+    property bool isPlaying: false
+    property bool shuffleActive: false
+    property bool repeatActive: false
+    property real position: 0.0         // 0.0–1.0
+    property real currentTime: 0.0      // seconds
+    property color currentAccent: "#A855F7"
+    property bool showingPlaylist: false
+    property bool trackEnded: false
+
+    // ============================================================
+    // MOCK TRACK DATA
+    // TODO: Replace with actual backend model and metadata.
+    // ============================================================
+    property var trackData: [
+        { title: "Neon Dreams",         artist: "Mystic Groove",         duration: 272, art: "", accent: "#A855F7" },
+        { title: "Aurora Borealis",     artist: "Synthwave Collective", duration: 238, art: "", accent: "#06B6D4" },
+        { title: "Midnight Circuit",    artist: "Digital Horizon",      duration: 312, art: "", accent: "#F43F5E" },
+        { title: "Glass Cathedral",     artist: "Ambient Souls",        duration: 405, art: "", accent: "#10B981" },
+        { title: "Pixel Rain",          artist: "Retro Future",         duration: 200, art: "", accent: "#F59E0B" },
+        { title: "Cosmic Drift",        artist: "Stellar Ensemble",     duration: 424, art: "", accent: "#8B5CF6" },
+        { title: "Chrome Waves",        artist: "Neon Tide",            duration: 258, art: "", accent: "#EC4899" },
+        { title: "Violet Echo",         artist: "Mystic Groove",        duration: 330, art: "", accent: "#14B8A6" },
+        { title: "Quantum Lullaby",     artist: "Deep Frequencies",     duration: 225, art: "", accent: "#6366F1" },
+        { title: "Starlight Protocol",  artist: "Digital Horizon",      duration: 382, art: "", accent: "#D946EF" }
+    ]
+
+    // Computed helpers
+    function currentTrack()       { return trackData[currentTrackIndex] || trackData[0] }
+    function currentTitle()       { return currentTrack().title }
+    function currentArtist()      { return currentTrack().artist }
+    function currentDuration()    { return currentTrack().duration }
+    function currentArt()         { return currentTrack().art }
+
+    function formatTime(sec) {
+        if (sec <= 0 || isNaN(sec)) return "0:00"
+        var m = Math.floor(sec / 60)
+        var s = Math.floor(sec % 60)
+        return m + ":" + (s < 10 ? "0" : "") + s
+    }
+
+    // ============================================================
+    // PLAYBACK SIMULATION TIMER  (placeholder — backend nanti)
+    // TODO: Remove this timer and connect to actual audio playback.
+    // ============================================================
+    Timer {
+        id: playbackTimer
+        interval: 250
+        repeat: true
+        running: window.isPlaying && Qt.application.active
+        onTriggered: {
+            var dur = currentDuration()
+            if (dur <= 0) return
+
+            currentTime += 0.25
+            position = Math.min(currentTime / dur, 1.0)
+
+            // Track ended
+            if (position >= 1.0) {
+                if (repeatActive) {
+                    // Repeat one track
+                    currentTime = 0
+                    position = 0
+                } else {
+                    nextTrack()
+                }
+            }
+        }
+    }
+
+    // ============================================================
+    // TRACK NAVIGATION
+    // ============================================================
+    function playTrack(index) {
+        if (index < 0 || index >= trackData.length) return
+        currentTrackIndex = index
+        currentTime = 0
+        position = 0
+        currentAccent = trackData[index].accent
+        isPlaying = true
+        trackEnded = false
+    }
+
+    function nextTrack() {
+        if (shuffleActive) {
+            var next
+            do {
+                next = Math.floor(Math.random() * trackData.length)
+            } while (next === currentTrackIndex && trackData.length > 1)
+            playTrack(next)
+        } else {
+            var idx = (currentTrackIndex + 1) % trackData.length
+            playTrack(idx)
+        }
+    }
+
+    function previousTrack() {
+        if (currentTime > 3) {
+            // Restart current track
+            currentTime = 0
+            position = 0
+            return
+        }
+        var idx = (currentTrackIndex - 1 + trackData.length) % trackData.length
+        playTrack(idx)
+    }
+
+    function togglePlayPause() {
+        isPlaying = !isPlaying
+    }
+
+    // ============================================================
+    // AURORA BACKGROUND
+    // ============================================================
     MyComponents.AuroraShader {
         anchors.fill: parent
         animated: Qt.application.animationEnabled !== undefined ? Qt.application.animationEnabled : true
+        // TODO: Optionally vary shader colors based on currentAccent.
     }
 
     MyComponents.AuroraParticles {
@@ -22,55 +139,139 @@ Window {
         animated: Qt.application.animationEnabled !== undefined ? Qt.application.animationEnabled : true
     }
 
-    Flickable {
-        id: flick
+    // ============================================================
+    // MAIN CONTENT
+    // ============================================================
+    Item {
+        id: contentArea
         anchors.fill: parent
-        contentHeight: column.height + 60
-        clip: true; topMargin: 20; bottomMargin: 20
-        leftMargin: Math.max(16, (parent.width - Math.min(parent.width, 800)) * 0.3)
-        rightMargin: Math.max(16, (parent.width - Math.min(parent.width, 800)) * 0.3)
+        anchors.bottomMargin: showingPlaylist ? miniPlayer.height : 0
+        clip: true
 
-        ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AsNeeded; width: 4
-            background: Rectangle { color: "transparent" }
-            contentItem: Rectangle { radius: 2; color: Qt.rgba(1, 1, 1, 0.15) }
+        // -- NOW PLAYING VIEW --
+        MyComponents.NowPlayingView {
+            id: nowPlayingView
+            x: 0
+            y: 0
+            width: contentArea.width
+            height: contentArea.height
+
+            accentColor: window.currentAccent
+            trackTitle: window.currentTitle()
+            trackArtist: window.currentArtist()
+            albumArt: window.currentArt()
+            isPlaying: window.isPlaying
+            position: window.position
+            currentTime: window.currentTime
+            duration: window.currentDuration()
+            shuffleActive: window.shuffleActive
+            repeatActive: window.repeatActive
+
+            onPlayPauseClicked:  window.togglePlayPause()
+            onNextClicked:       window.nextTrack()
+            onPreviousClicked:   window.previousTrack()
+            onShuffleClicked:    window.shuffleActive = !window.shuffleActive
+            onRepeatClicked:     window.repeatActive = !window.repeatActive
+            onSeeked: (value) => {
+                // TODO: Connect seek to actual audio backend
+                window.position = value
+                window.currentTime = value * currentDuration()
+            }
+            onNavigateToQueue:   window.showingPlaylist = true
         }
 
-        Column {
-            id: column
-            width: flick.width - flick.leftMargin - flick.rightMargin
-            spacing: 12
+        // -- PLAYLIST VIEW --
+        MyComponents.PlaylistView {
+            id: playlistView
+            x: contentArea.width   // starts off-screen; state system manages transitions
+            y: 0
+            width: contentArea.width
+            height: contentArea.height
 
-            Text { id: header; text: "✨ Mystic Groove"; font.pixelSize: 28; font.bold: true; color: "#FFFFFF"; anchors.horizontalCenter: parent.horizontalCenter }
-            Text { text: "Modern UI dengan Qt Quick"; font.pixelSize: 14; color: "#A0A0C0"; anchors.horizontalCenter: parent.horizontalCenter; anchors.bottomMargin: 8 }
+            accentColor: window.currentAccent
+            isPlaying: window.isPlaying
+            currentTrackIndex: window.currentTrackIndex
+            playlistData: window.trackData  // share same data
 
-            Flow {
-                id: cardFlow; width: parent.width; spacing: 16
-
-                MyComponents.GlassCard {
-                    id: card1; title: "Qt Quick"; subtitle: "Framework UI deklaratif"
-                    description: "Bikin antarmuka modern dengan QML — mirip JSON + JavaScript, render native."
-                    accentColor: "#A855F7"; entranceDelay: 300
-                    onClicked: card1Desc.visible = !card1Desc.visible
-                }
-                Text { id: card1Desc; text: "► Komponen reusable dipisah di file sendiri, tinggal import dan pake."; color: "#A0A0C0"; font.pixelSize: 12; wrapMode: Text.WordWrap; width: card1.width; visible: false }
-
-                MyComponents.GlassCard {
-                    id: card2; title: "C++ Backend"; subtitle: "Logika native"
-                    description: "Kinerja tinggi untuk kalkulasi, akses file, hardware, database."
-                    accentColor: "#06B6D4"; entranceDelay: 500
-                    onClicked: card2Desc.visible = !card2Desc.visible
-                }
-                Text { id: card2Desc; text: "► C++ di backend, panggil dari QML via Q_INVOKABLE."; color: "#A0A0C0"; font.pixelSize: 12; wrapMode: Text.WordWrap; width: card2.width; visible: false }
-
-                MyComponents.GlassCard {
-                    id: card3; title: "Qt Quick Controls"; subtitle: "Komponen siap pakai"
-                    description: "Button, Slider, Dialog, Drawer — pustaka lengkap untuk antarmuka native."
-                    accentColor: "#F43F5E"; entranceDelay: 700
-                    onClicked: card3Desc.visible = !card3Desc.visible
-                }
-                Text { id: card3Desc; text: "► Tinggal panggil Controls.Button {} — tampilannya sudah native."; color: "#A0A0C0"; font.pixelSize: 12; wrapMode: Text.WordWrap; width: card3.width; visible: false }
+            onBackToPlayer: window.showingPlaylist = false
+            onTrackSelected: (idx) => {
+                window.playTrack(idx)
+                window.showingPlaylist = false
             }
+        }
+
+        // Navigation states & transitions (Item supports these; Window does not)
+        states: [
+            State {
+                name: "playlistView"
+                when: window.showingPlaylist
+                PropertyChanges { target: nowPlayingView; x: -contentArea.width * 0.15; opacity: 0.0; scale: 0.92 }
+                PropertyChanges { target: playlistView; x: 0 }
+            },
+            State {
+                name: "playerView"
+                when: !window.showingPlaylist
+                PropertyChanges { target: nowPlayingView; x: 0; opacity: 1.0; scale: 1.0 }
+                PropertyChanges { target: playlistView; x: contentArea.width }
+            }
+        ]
+
+        transitions: [
+            Transition {
+                from: "playerView"; to: "playlistView"
+                NumberAnimation { target: nowPlayingView; property: "x"; duration: 400; easing.type: Easing.OutCubic }
+                NumberAnimation { target: nowPlayingView; property: "opacity"; duration: 350; easing.type: Easing.OutCubic }
+                NumberAnimation { target: nowPlayingView; property: "scale"; duration: 350; easing.type: Easing.OutCubic }
+                NumberAnimation { target: playlistView; property: "x"; duration: 400; easing.type: Easing.OutCubic }
+            },
+            Transition {
+                from: "playlistView"; to: "playerView"
+                NumberAnimation { target: nowPlayingView; property: "x"; duration: 400; easing.type: Easing.OutCubic }
+                NumberAnimation { target: nowPlayingView; property: "opacity"; duration: 350; easing.type: Easing.OutCubic }
+                NumberAnimation { target: nowPlayingView; property: "scale"; duration: 350; easing.type: Easing.OutCubic }
+                NumberAnimation { target: playlistView; property: "x"; duration: 400; easing.type: Easing.OutCubic }
+            }
+        ]
+    }
+
+    // ============================================================
+    // MINI PLAYER
+    // ============================================================
+    MyComponents.MiniPlayer {
+        id: miniPlayer
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        visible: window.showingPlaylist
+        height: 64
+
+        accentColor: window.currentAccent
+        songTitle: window.currentTitle()
+        artist: window.currentArtist()
+        artSource: window.currentArt()
+        isPlaying: window.isPlaying
+        position: window.position
+        duration: window.currentDuration()
+
+        onExpandClicked: window.showingPlaylist = false
+        onPlayPauseClicked: window.togglePlayPause()
+        onNextClicked: window.nextTrack()
+    }
+
+    // ============================================================
+    // LIFECYCLE
+    // ============================================================
+    Component.onCompleted: {
+        // Initialize first track
+        currentAccent = trackData[0].accent
+        currentTime = 0
+        position = 0
+    }
+
+    // Pause when window loses focus
+    onActiveChanged: {
+        if (!active && isPlaying) {
+            // Optionally pause, or keep playing — let user decide later
         }
     }
 }

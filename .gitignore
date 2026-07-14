@@ -26,3 +26,5 @@ shaders/*.qsb
 *.qsb
 
 build
+.qmlls.ini
+.cache
