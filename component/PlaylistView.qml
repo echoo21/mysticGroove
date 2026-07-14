@@ -75,12 +75,12 @@ Item {
                 // Back button
                 PlayerIconButton {
                     id: backBtn
-                    iconText: "〈"
+                    iconName: "chevronLeft"
                     size: 36
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     accentColor: root.accentColor
-                    iconScale: 0.45
+                    iconScale: 0.40
                     onClicked: root.backToPlayer()
                 }
 

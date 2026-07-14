@@ -1,10 +1,12 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 import "."
 
 /**
  * Full now-playing screen — album art, song info, seek bar, transport controls, queue button.
  * Designed with clear typography hierarchy and micro-interactions.
+ * Ambient accent glow behind album art animates smoothly on track change.
  *
  * TODO-Connect Backend:
  *   - Set trackTitle, trackArtist, albumArt, duration, currentTime from backend.
@@ -50,9 +52,9 @@ Item {
     Flickable {
         id: flick
         anchors.fill: parent
-        anchors.topMargin: 20
-        anchors.bottomMargin: 20
-        contentHeight: contentColumn.height + 40
+        anchors.topMargin: 24
+        anchors.bottomMargin: 24
+        contentHeight: contentColumn.height + 48
         clip: true
         interactive: contentHeight > height
 
@@ -68,14 +70,59 @@ Item {
             spacing: 0
             anchors.horizontalCenter: parent.horizontalCenter
 
-            // === ALBUM ART ===
+            // === AMBIENT GLOW + ALBUM ART ===
             Item {
                 width: parent.width
-                height: Math.min(parent.width * 0.75, 340)
+                height: Math.min(parent.width * 0.75, 360)
+
+                // Ambient glow behind album art (Apple Music style)
+                Rectangle {
+                    id: ambientGlow
+                    width: Math.min(parent.width * 0.85, 320)
+                    height: width
+                    anchors.centerIn: parent
+                    radius: width / 2
+                    color: Qt.rgba(root.accentColor.r, root.accentColor.g, root.accentColor.b, 0.18)
+                    opacity: 0.85
+
+                    Behavior on color {
+                        ColorAnimation { duration: 800; easing.type: Easing.OutCubic }
+                    }
+
+                    // Blurred halo
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        blurEnabled: true
+                        blurMax: 64
+                        blur: 1.0
+                    }
+                }
+
+                // Secondary outer glow (wider, more diffuse)
+                Rectangle {
+                    id: outerGlow
+                    width: Math.min(parent.width * 1.1, 400)
+                    height: width
+                    anchors.centerIn: parent
+                    radius: width / 2
+                    color: Qt.rgba(root.accentColor.r, root.accentColor.g, root.accentColor.b, 0.08)
+                    opacity: 0.6
+
+                    Behavior on color {
+                        ColorAnimation { duration: 1000; easing.type: Easing.OutCubic }
+                    }
+
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        blurEnabled: true
+                        blurMax: 64
+                        blur: 1.0
+                    }
+                }
 
                 AlbumArtDisplay {
                     id: albumArtDisplay
-                    artSize: Math.min(parent.width * 0.70, 300)
+                    artSize: Math.min(parent.width * 0.68, 280)
                     anchors.centerIn: parent
                     artSource: root.albumArt
                     accentColor: root.accentColor
@@ -89,18 +136,17 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 height: songInfo.height + 32
 
-                // Track title
                 Column {
                     id: songInfo
                     anchors.centerIn: parent
                     width: parent.width
-                    spacing: 4
+                    spacing: 8
 
                     Text {
                         id: titleText
                         width: parent.width
                         text: root.trackTitle
-                        font.pixelSize: 26
+                        font.pixelSize: 28
                         font.weight: Font.Bold
                         color: "#F0F0FF"
                         elide: Text.ElideRight
@@ -108,13 +154,22 @@ Item {
                         lineHeight: 1.1
                     }
 
+                    // Hairline divider between title and artist
+                    Rectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 24
+                        height: 1
+                        color: Qt.rgba(root.accentColor.r, root.accentColor.g, root.accentColor.b, 0.15)
+                        visible: root.trackArtist !== ""
+                    }
+
                     Text {
                         id: artistText
                         width: parent.width
                         text: root.trackArtist
-                        font.pixelSize: 15
+                        font.pixelSize: 14
                         font.weight: Font.Normal
-                        color: Qt.rgba(1, 1, 1, 0.55)
+                        color: Qt.rgba(1, 1, 1, 0.48)
                         horizontalAlignment: Text.AlignHCenter
                         elide: Text.ElideRight
                     }
@@ -140,9 +195,9 @@ Item {
 
             // === CONTROLS ===
             Item {
-                width: parent.width - 32
+                width: parent.width - 24
                 anchors.horizontalCenter: parent.horizontalCenter
-                height: 72
+                height: 80
 
                 PlayerControls {
                     id: playerControls
@@ -164,24 +219,26 @@ Item {
             Item {
                 width: parent.width - 48
                 anchors.horizontalCenter: parent.horizontalCenter
-                height: root.volumeExpanded ? 48 : 36
+                height: root.volumeExpanded ? 48 : 32
                 clip: true
 
-                Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                Behavior on height { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
 
                 Row {
                     anchors.centerIn: parent
-                    spacing: 10
+                    spacing: 12
                     height: 28
 
                     // Speaker icon (toggle expand)
-                    Text {
+                    PlayerIcon {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: root.volume > 0.0 ? (root.volume > 0.5 ? "🔊" : "🔉") : "🔇"
-                        font.pixelSize: 14
+                        iconName: root.volume <= 0.0 ? "volumeMuted"
+                                : (root.volume > 0.5 ? "volumeHigh" : "volumeLow")
+                        iconSize: 20
+                        color: Qt.rgba(1, 1, 1, 0.55)
                         MouseArea {
                             anchors.fill: parent
-                            anchors.margins: -6
+                            anchors.margins: -8
                             cursorShape: Qt.PointingHandCursor
                             onClicked: root.volumeExpanded = !root.volumeExpanded
                         }
@@ -195,9 +252,9 @@ Item {
                         from: 0.0; to: 1.0; value: root.volume
                         stepSize: 0.02
 
-                        Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                        Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
                         opacity: root.volumeExpanded ? 1.0 : 0.0
-                        Behavior on opacity { NumberAnimation { duration: 200 } }
+                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
                         background: Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
@@ -212,7 +269,7 @@ Item {
                             x: volumeSlider.visualPosition * (volumeSlider.availableWidth) - width / 2
                             y: volumeSlider.topPadding + volumeSlider.availableHeight / 2 - height / 2
                             width: 12; height: 12; radius: 6
-                            color: Qt.rgba(1, 1, 1, 0.85)
+                            color: Qt.rgba(1, 1, 1, 0.90)
                             border.color: root.accentColor; border.width: 2
                         }
                         onMoved: {
@@ -221,16 +278,24 @@ Item {
                         }
                     }
 
-                    // Volume percentage label (always visible when collapsed)
+                    // Volume percentage label (compact when collapsed)
                     Text {
                         id: volumePct
                         anchors.verticalCenter: parent.verticalCenter
                         text: Math.round(root.volume * 100) + "%"
                         font.pixelSize: 11
-                        color: Qt.rgba(1, 1, 1, 0.40)
+                        color: Qt.rgba(1, 1, 1, 0.35)
                         visible: !root.volumeExpanded
                     }
                 }
+            }
+
+            // === HAIRLINE DIVIDER ===
+            Rectangle {
+                width: parent.width - 80
+                anchors.horizontalCenter: parent.horizontalCenter
+                height: 1
+                color: Qt.rgba(1, 1, 1, 0.06)
             }
 
             // === QUEUE BUTTON ===
@@ -242,19 +307,31 @@ Item {
                 Rectangle {
                     id: queueBtn
                     anchors.centerIn: parent
-                    width: parent.width * 0.5
-                    height: 38
+                    width: parent.width * 0.48
+                    height: 40
                     radius: 12
                     color: Qt.rgba(1, 1, 1, 0.04)
-                    border.color: Qt.rgba(1, 1, 1, 0.10)
+                    border.color: Qt.rgba(1, 1, 1, 0.08)
                     border.width: 1
 
-                    Text {
+                    Row {
                         anchors.centerIn: parent
-                        text: "View Playlist  〉"
-                        font.pixelSize: 13
-                        font.weight: Font.DemiBold
-                        color: Qt.rgba(1, 1, 1, 0.60)
+                        spacing: 8
+
+                        PlayerIcon {
+                            iconName: "queue"
+                            iconSize: 16
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: Qt.rgba(1, 1, 1, 0.55)
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Playlist"
+                            font.pixelSize: 13
+                            font.weight: Font.DemiBold
+                            color: Qt.rgba(1, 1, 1, 0.55)
+                        }
                     }
 
                     MouseArea {
@@ -266,7 +343,7 @@ Item {
                         onClicked: root.navigateToQueue()
                     }
 
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
                 }
             }
         }

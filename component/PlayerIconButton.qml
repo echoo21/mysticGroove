@@ -2,17 +2,18 @@ import QtQuick
 
 /**
  * Circular glass icon button for player controls.
- * Use text icon or emoji as iconText. active is externally controlled by parent.
- *
- * TODO: Replace icon placeholders (▶ ⏸ ⏮ ⏭ 🔀 🔁) with custom SVGs or icon font if desired.
+ * Uses PlayerIcon (vector) for icon rendering.
+ * Replace iconName property with one of: play, pause, skipPrevious, skipNext,
+ * shuffle, repeat, chevronLeft, volumeHigh, volumeMedium, volumeLow, volumeMuted,
+ * musicNote, queue
  */
 Item {
     id: root
 
-    property string iconText: "▶"
+    property string iconName: "play"
     property color accentColor: "#A855F7"
     property real size: 44
-    property real iconScale: 0.48
+    property real iconScale: 0.44
     property bool active: false       // visual active/toggle state (set externally)
     property bool btnEnabled: true
 
@@ -47,7 +48,7 @@ Item {
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
                     GradientStop { position: 0.0; color: "transparent" }
-                    GradientStop { position: 0.5; color: Qt.rgba(1, 1, 1, 0.08) }
+                    GradientStop { position: 0.5; color: Qt.rgba(1, 1, 1, 0.10) }
                     GradientStop { position: 1.0; color: "transparent" }
                 }
                 NumberAnimation on x {
@@ -70,19 +71,26 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 200 } }
     }
 
-    // Icon text
-    Text {
+    // Vector icon
+    PlayerIcon {
         anchors.centerIn: parent
-        text: root.iconText
-        font.pixelSize: root.size * root.iconScale
+        iconName: root.iconName
+        iconSize: root.size * root.iconScale
         color: root.btnEnabled
             ? (root.active
                 ? Qt.rgba(1, 1, 1, 1)
                 : Qt.rgba(1, 1, 1, 0.85))
             : Qt.rgba(1, 1, 1, 0.30)
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        lineHeight: 1.0
+    }
+
+    // Press shadow (scales down with button for pressed effect)
+    Rectangle {
+        anchors.fill: parent
+        radius: width / 2
+        color: "transparent"
+        border.color: Qt.rgba(0, 0, 0, 0.4)
+        border.width: 0
+        opacity: 0
     }
 
     // Mouse area

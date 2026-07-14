@@ -3,8 +3,7 @@ import "."
 
 /**
  * Main transport controls: Shuffle | Prev | Play/Pause | Next | Repeat
- * Play/pause is larger and more prominent. Uses PlayerIconButton.
- * Toggle state (shuffle, repeat) is managed externally by the parent.
+ * Play/pause is larger and more prominent. Uses PlayerIconButton with vector icons.
  *
  * TODO: Connect shuffleClicked to shuffle mode.
  * TODO: Connect repeatClicked to repeat mode.
@@ -36,7 +35,7 @@ Item {
 
         // Shuffle
         PlayerIconButton {
-            iconText: "🔀"
+            iconName: "shuffle"
             size: 38
             anchors.verticalCenter: parent.verticalCenter
             accentColor: root.accentColor
@@ -47,7 +46,7 @@ Item {
 
         // Previous
         PlayerIconButton {
-            iconText: "⏮"
+            iconName: "skipPrevious"
             size: 38
             anchors.verticalCenter: parent.verticalCenter
             accentColor: root.accentColor
@@ -55,21 +54,21 @@ Item {
             onClicked: root.previousClicked()
         }
 
-        // Play/Pause (larger)
+        // Play/Pause (larger, prominent)
         PlayerIconButton {
-            iconText: root.isPlaying ? "⏸" : "▶"
+            iconName: root.isPlaying ? "pause" : "play"
             size: 56
             anchors.verticalCenter: parent.verticalCenter
             accentColor: root.accentColor
             btnEnabled: root.controlsEnabled
             active: root.isPlaying
-            iconScale: 0.42
+            iconScale: 0.40
             onClicked: root.playPauseClicked()
         }
 
         // Next
         PlayerIconButton {
-            iconText: "⏭"
+            iconName: "skipNext"
             size: 38
             anchors.verticalCenter: parent.verticalCenter
             accentColor: root.accentColor
@@ -79,7 +78,7 @@ Item {
 
         // Repeat
         PlayerIconButton {
-            iconText: "🔁"
+            iconName: "repeat"
             size: 38
             anchors.verticalCenter: parent.verticalCenter
             accentColor: root.accentColor

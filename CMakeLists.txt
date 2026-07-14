@@ -34,6 +34,7 @@ qt_add_qml_module(mysticGrooveApp
         component/GlassCard.qml
         component/GlassButton.qml
         component/PlayerIconButton.qml
+        component/PlayerIcon.qml
         component/SeekBar.qml
         component/AlbumArtDisplay.qml
         component/PlayerControls.qml
