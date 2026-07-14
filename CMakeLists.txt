@@ -41,8 +41,8 @@ qt_add_qml_module(mysticGrooveApp
         component/MiniPlayer.qml
         component/NowPlayingView.qml
         component/PlaylistView.qml
-        component/aurora.frag.qsb
     RESOURCES
+        component/aurora.frag.qsb
 )
 
 target_link_libraries(mysticGrooveApp PRIVATE
